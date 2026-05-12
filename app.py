@@ -267,3 +267,28 @@ st.dataframe(
 st.caption(
     "Lower pace means faster runners. Pace axes are reversed so that better fitness appears higher."
 )
+
+# -------------------
+# Approach
+# -------------------------
+
+st.divider()
+
+st.header("How FitnessDAX Works")
+
+st.markdown("""
+## How FitnessDAX Works
+
+FitnessDAX is a hobby data project that explores the intersection of corporate fitness culture and stock market performance. The project is based on publicly available results from Germany’s B2Run company races, where employees from thousands of organizations participate in running events across the country.
+
+The dataset currently includes more than 180,000 runners from multiple B2Run events and years. Companies were matched against publicly traded German firms from indices such as the DAX, MDAX, SDAX, and TecDAX. The goal is not to measure absolute athletic performance, but to identify patterns in participation, consistency, and running performance across organizations over time.
+
+A key design decision was to avoid simply rewarding companies with the largest number of participants. Large corporations naturally have an advantage in raw participation numbers. Instead, FitnessDAX focuses primarily on the pace of the top-performing runners within a company.
+
+The core metric is therefore based on the average pace of the top 20% fastest runners of each company. This creates a more stable and comparable indicator of corporate fitness culture, rather than measuring company size. In addition, an “Endurance Multiple” is calculated, which compares the top 20% pace against the company-wide median pace. This helps identify whether fitness performance is broadly distributed across the organization or concentrated among a small group of highly athletic employees.
+
+Stock performance data is then added separately using historical yearly returns. The platform intentionally does not claim causation between fitness and financial performance. FitnessDAX is an exploratory and entertaining data experiment designed to visualize potential relationships, trends, and outliers over time.
+
+The project combines web scraping, company matching, data normalization, stock market integration, and interactive visualization into a single public dataset. While the methodology continues to evolve, the intention remains simple: create a playful but data-driven way to explore whether the fittest companies might also be among the most successful.
+
+""")
