@@ -1,0 +1,86 @@
+company_name,ticker,index,sector,cluster,germany_employees_estimate
+Airbus,AIR.DE,DAX,Industrials,Engineering Giants,18000
+Adidas,ADS.DE,DAX,Consumer,Consumer Lifestyle,6000
+Allianz,ALV.DE,DAX,Finance,Corporate Marathoners,45000
+Aurubis,NDA.DE,MDAX,Materials,Heavy Industry,7000
+BASF,BAS.DE,DAX,Chemicals,Factory Endurance,52000
+Bayer,BAYN.DE,DAX,Healthcare,Factory Endurance,35000
+Beiersdorf,BEI.DE,DAX,Consumer,Consumer Lifestyle,3500
+BMW,BMW.DE,DAX,Automotive,Mobility Machines,88000
+Brenntag,BNR.DE,DAX,Chemicals,Factory Endurance,17000
+Carl Zeiss Meditec,AFX.DE,MDAX,Healthcare,Precision Engineers,5000
+Commerzbank,CBK.DE,DAX,Finance,Corporate Marathoners,36000
+Continental,CON.DE,DAX,Automotive,Factory Endurance,32000
+Covestro,1COV.DE,DAX,Chemicals,Factory Endurance,8000
+Delivery Hero,DHER.DE,MDAX,Technology,Digital Hustlers,2000
+Deutsche Bank,DBK.DE,DAX,Finance,Corporate Marathoners,38000
+Deutsche Boerse,DB1.DE,DAX,Finance,Corporate Marathoners,7000
+Deutsche Lufthansa,LHA.DE,MDAX,Logistics,Mobility Machines,38000
+Deutsche Post,DHL.DE,DAX,Logistics,Corporate Marathoners,190000
+Deutsche Telekom,DTE.DE,DAX,Telecom,Connected Operators,90000
+Daimler Truck,DTG.DE,DAX,Automotive,Mobility Machines,35000
+E.ON,EOAN.DE,DAX,Energy,Grid Operators,47000
+Evonik,EVK.DE,MDAX,Chemicals,Factory Endurance,21000
+Fraport,FRA.DE,MDAX,Logistics,Infrastructure Operators,19000
+Freenet,FNTN.DE,MDAX,Telecom,Connected Operators,3500
+Fresenius,FRE.DE,DAX,Healthcare,Care Providers,90000
+Fresenius Medical Care,FME.DE,DAX,Healthcare,Care Providers,40000
+GEA,G1A.DE,MDAX,Industrials,Engineering Giants,9000
+Gerresheimer,GXI.DE,MDAX,Healthcare,Precision Engineers,5000
+Hannover Rueck,HNR1.DE,DAX,Finance,Corporate Marathoners,3500
+Heidelberg Materials,HEI.DE,DAX,Materials,Heavy Industry,16000
+HelloFresh,HFG.DE,MDAX,Consumer,Digital Hustlers,4000
+Henkel,HEN3.DE,DAX,Consumer,Consumer Lifestyle,9000
+Hochtief,HOT.DE,MDAX,Industrials,Infrastructure Operators,5000
+Infineon,IFX.DE,DAX,Technology,Precision Engineers,20000
+Jenoptik,JEN.DE,MDAX,Technology,Precision Engineers,5000
+KION,KGX.DE,MDAX,Industrials,Engineering Giants,12000
+Knorr-Bremse,KBX.DE,DAX,Industrials,Engineering Giants,15000
+LANXESS,LXS.DE,MDAX,Chemicals,Factory Endurance,7000
+Mercedes-Benz,MBG.DE,DAX,Automotive,Mobility Machines,95000
+Merck,MRK.DE,DAX,Healthcare,Precision Engineers,13000
+MTU Aero Engines,MTX.DE,DAX,Industrials,Precision Engineers,12000
+Munich Re,MUV2.DE,DAX,Finance,Corporate Marathoners,12000
+Nemetschek,NEM.DE,DAX,Technology,Office Athletes,1500
+Porsche,P911.DE,DAX,Automotive,Mobility Machines,42000
+Puma,PUM.DE,MDAX,Consumer,Consumer Lifestyle,2500
+Qiagen,QIA.DE,DAX,Healthcare,Precision Engineers,1000
+Rational,RAA.DE,MDAX,Industrials,Precision Engineers,1600
+Rheinmetall,RHM.DE,DAX,Industrials,Heavy Industry,16000
+RWE,RWE.DE,DAX,Energy,Grid Operators,11000
+SAP,SAP.DE,DAX,Technology,Office Athletes,20000
+Sartorius,SRT3.DE,DAX,Healthcare,Precision Engineers,7000
+Scout24,G24.DE,DAX,Technology,Digital Hustlers,1200
+Siemens Energy,ENR.DE,DAX,Energy,Engineering Giants,27000
+Siemens Healthineers,SHL.DE,DAX,Healthcare,Precision Engineers,24000
+Siemens,SIE.DE,DAX,Industrials,Engineering Giants,86000
+Symrise,SY1.DE,DAX,Consumer,Consumer Lifestyle,5000
+TeamViewer,TMV.DE,MDAX,Technology,Office Athletes,700
+United Internet,UTDI.DE,MDAX,Telecom,Connected Operators,11000
+Volkswagen,VOW3.DE,DAX,Automotive,Mobility Machines,295000
+Vonovia,VNA.DE,DAX,Real Estate,Infrastructure Operators,12000
+Wacker Chemie,WCH.DE,MDAX,Chemicals,Factory Endurance,8000
+Zalando,ZAL.DE,DAX,Consumer,Digital Hustlers,8000
+Talanx,TLX.DE,MDAX,Finance,Corporate Marathoners,12000
+adesso,ADN1.DE,SDAX,Technology,Office Athletes,10000
+DEUTZ,DEZ.DE,SDAX,Industrials,Heavy Industry,5000
+Schaeffler,SHA0.DE,MDAX,Automotive,Factory Endurance,45000
+TUI,TUI1.DE,MDAX,Consumer,Mobility Machines,10000
+RTL Group,RRTL.DE,MDAX,Media,Content Machines,2000
+grenke,GLJ.DE,SDAX,Finance,Corporate Marathoners,2200
+Villeroy & Boch,VIB3.DE,SDAX,Consumer,Consumer Lifestyle,4500
+UmweltBank,UBK.DE,Other,Finance,Sustainable Finance,350
+Uniper,UN0.DE,SDAX,Energy,Grid Operators,7000
+thyssenkrupp,TKA.DE,MDAX,Industrials,Heavy Industry,48000
+CANCOM,COK.DE,SDAX,Technology,Office Athletes,4000
+Elmos Semiconductor,ELG.DE,SDAX,Technology,Precision Engineers,1400
+Borussia Dortmund,BVB.DE,SDAX,Media,Performance Culture,1000
+CENIT,CSH.DE,Other,Technology,Office Athletes,900
+Dermapharm,DMP.DE,SDAX,Healthcare,Care Providers,3000
+OVB Holding,O4B.DE,Other,Finance,Corporate Marathoners,700
+EnBW,EBK.DE,Other,Energy,Grid Operators,28000
+TRATON,8TRA.DE,MDAX,Automotive,Mobility Machines,8000
+LPKF Laser & Electronics,LPK.DE,SDAX,Technology,Precision Engineers,800
+CTS Eventim,EVD.DE,MDAX,Media,Content Machines,3500
+Amadeus Fire,AAD.DE,SDAX,Professional Services,Office Athletes,4200
+PSI Software,PSAN.DE,SDAX,Technology,Office Athletes,2300

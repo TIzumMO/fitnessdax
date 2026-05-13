@@ -1,0 +1,35 @@
+import pandas as pd
+
+fitness_df = pd.read_csv("output/fitnessdax_with_stocks.csv")
+employees_df = pd.read_csv("data/germany_employees.csv")
+
+fitness_df["ticker"] = fitness_df["ticker"].astype(str).str.strip().str.upper()
+employees_df["ticker"] = employees_df["ticker"].astype(str).str.strip().str.upper()
+
+merged_df = fitness_df.merge(
+    employees_df[
+        [
+            "ticker",
+            "sector",
+            "cluster",
+            "germany_employees_estimate"
+        ]
+    ],
+    on="ticker",
+    how="left"
+)
+
+missing = merged_df[merged_df["germany_employees_estimate"].isna()]
+
+print("Missing employee matches:")
+print(missing[["matched_company", "ticker"]])
+
+merged_df["participation_rate"] = (
+    merged_df["participants"] / merged_df["germany_employees_estimate"]
+)
+
+merged_df["participation_rate_pct"] = merged_df["participation_rate"] * 100
+
+merged_df.to_csv("output/fitnessdax_final.csv", index=False)
+
+print("Saved output/fitnessdax_final.csv")
