@@ -40,9 +40,7 @@ df = pd.read_csv("output/fitnessdax_final.csv")
 numeric_cols = [
     "participants",
     "races_entered",
-    "top_20_pace",
     "median_pace",
-    "endurance_multiple",
     "yearly_return_pct",
     "germany_employees_estimate",
     "participation_rate",
@@ -66,7 +64,7 @@ FitnessDAX is a hobby data project exploring whether fit companies also perform 
 
 The project is based on publicly available B2Run race results across Germany and currently includes more than 180,000 runners from almost 50 events over 3 years.
 
-The dataset now also includes estimated German employee numbers, sectors and playful company clusters to make participation comparable across companies.
+Happy to cooperate on further analysis.
 
 Most importantly: This is not financial advice 😄
 """)
@@ -75,33 +73,6 @@ st.sidebar.divider()
 
 st.sidebar.markdown("**Timo Radzik**")
 st.sidebar.markdown("💼 [LinkedIn](https://www.linkedin.com/in/timo-radzik/)")
-
-st.sidebar.divider()
-
-st.sidebar.header("Filters")
-
-years = sorted(df["year"].dropna().unique(), reverse=True)
-
-selected_year = st.sidebar.selectbox(
-    "Year",
-    years
-)
-
-available_sectors = sorted(df["sector"].dropna().unique())
-
-selected_sectors = st.sidebar.multiselect(
-    "Sector",
-    available_sectors,
-    default=available_sectors
-)
-
-available_clusters = sorted(df["cluster"].dropna().unique())
-
-selected_clusters = st.sidebar.multiselect(
-    "Cluster",
-    available_clusters,
-    default=available_clusters
-)
 
 
 # -------------------------
@@ -116,20 +87,35 @@ st.caption(
 
 st.divider()
 
-
 # -------------------------
-# FILTER DATA
+# LEADERBOARD FILTERS
 # -------------------------
 
-filtered = df[
+with st.expander("Filter leaderboard", expanded=False):
+    years = sorted(df["year"].dropna().unique(), reverse=True)
+
+    selected_year = st.selectbox(
+        "Year",
+        years
+    )
+
+    available_sectors = sorted(df["sector"].dropna().unique())
+
+    selected_sectors_leaderboard = st.multiselect(
+        "Sector",
+        available_sectors,
+        default=available_sectors
+    )
+
+leaderboard_filtered = df[
     (df["year"] == selected_year)
-    & (df["sector"].isin(selected_sectors))
-    & (df["cluster"].isin(selected_clusters))
+    & (df["sector"].isin(selected_sectors_leaderboard))
 ].copy()
 
-filtered = filtered.dropna(subset=["fitnessdax_rank"])
-filtered = filtered.sort_values("fitnessdax_rank")
+leaderboard_filtered = leaderboard_filtered.dropna(subset=["fitnessdax_rank"])
+leaderboard_filtered = leaderboard_filtered.sort_values("fitnessdax_rank")
 
+st.subheader(f"🏆 FitnessDAX Leaderboard ({selected_year})")
 
 # -------------------------
 # METRICS
@@ -139,27 +125,27 @@ col1, col2, col3, col4 = st.columns(4)
 
 col1.metric(
     "Companies",
-    len(filtered)
+    len(leaderboard_filtered)
 )
 
 col2.metric(
     "Total Participants",
-    int(filtered["participants"].sum()) if len(filtered) > 0 else 0
+    int(leaderboard_filtered["participants"].sum()) if len(leaderboard_filtered) > 0 else 0
 )
 
-avg_top20_pace = (
-    filtered["top_20_pace"].mean()
-    if len(filtered) > 0 else None
+median_pace = (
+    leaderboard_filtered["median_pace"].mean()
+    if len(leaderboard_filtered) > 0 else None
 )
 
 col3.metric(
-    "Average Top 20% Pace",
-    pace_to_mmss(avg_top20_pace)
+    "Median Pace",
+    pace_to_mmss(median_pace)
 )
 
 avg_participation = (
-    filtered["participation_rate_pct"].mean()
-    if "participation_rate_pct" in filtered.columns and len(filtered) > 0 else None
+    leaderboard_filtered["participation_rate_pct"].mean()
+    if "participation_rate_pct" in leaderboard_filtered.columns and len(leaderboard_filtered) > 0 else None
 )
 
 col4.metric(
@@ -167,34 +153,25 @@ col4.metric(
     format_pct(avg_participation)
 )
 
-st.divider()
-
-
 # -------------------------
 # LEADERBOARD
 # -------------------------
 
-st.subheader("🏆 FitnessDAX Leaderboard")
-
 leaderboard_cols = [
     "fitnessdax_rank",
     "matched_company",
-    "ticker",
     "index",
     "sector",
-    "cluster",
     "participants",
     "germany_employees_estimate",
     "participation_rate_pct",
-    "top_20_pace_formatted",
     "median_pace_formatted",
-    "endurance_multiple",
     "yearly_return_pct",
 ]
 
-leaderboard_cols = [col for col in leaderboard_cols if col in filtered.columns]
+leaderboard_cols = [col for col in leaderboard_cols if col in leaderboard_filtered.columns]
 
-leaderboard = filtered[leaderboard_cols].copy()
+leaderboard = leaderboard_filtered[leaderboard_cols].copy()
 
 if "participation_rate_pct" in leaderboard.columns:
     leaderboard["participation_rate_pct"] = leaderboard["participation_rate_pct"].round(2)
@@ -202,42 +179,47 @@ if "participation_rate_pct" in leaderboard.columns:
 if "yearly_return_pct" in leaderboard.columns:
     leaderboard["yearly_return_pct"] = leaderboard["yearly_return_pct"].round(2)
 
+leaderboard = leaderboard.rename(
+    columns={
+        "fitnessdax_rank": "Rank",
+        "matched_company": "Company",
+        "index": "Index",
+        "sector": "Sector",
+        "participants": "Participants",
+        "germany_employees_estimate": "Employees (DE)",
+        "participation_rate_pct": "Participation (%)",
+        "median_pace_formatted": "Median Pace",
+        "yearly_return_pct": "Stock Return (%)",
+    }
+)
+
+for col in ["Participants", "Employees (DE)", "Participation (%)", "Stock Return (%)"]:
+    if col in leaderboard.columns:
+        leaderboard[col] = pd.to_numeric(leaderboard[col], errors="coerce")
+
 st.dataframe(
     leaderboard,
     use_container_width=True,
-    hide_index=True
+    hide_index=True,
+    column_config={
+        "Participants": st.column_config.NumberColumn(
+            "Participants",
+            format="%d"
+        ),
+        "Employees (DE)": st.column_config.NumberColumn(
+            "Employees (DE)",
+            format="%d"
+        ),
+        "Participation (%)": st.column_config.NumberColumn(
+            "Participation (%)",
+            format="%.2f%%"
+        ),
+        "Stock Return (%)": st.column_config.NumberColumn(
+            "Stock Return (%)",
+            format="%.2f%%"
+        ),
+    }
 )
-
-st.divider()
-
-
-# -------------------------
-# PARTICIPATION RATE VS PACE
-# -------------------------
-
-st.subheader("📈 Top 20% Pace vs Participation Rate")
-
-scatter_filtered = filtered.dropna(
-    subset=["participation_rate_pct", "top_20_pace"]
-)
-
-fig = px.scatter(
-    scatter_filtered,
-    x="participation_rate_pct",
-    y="top_20_pace",
-    hover_name="matched_company",
-    size="participants",
-    color="sector",
-    labels={
-        "participation_rate_pct": "Participation Rate (% of German employees)",
-        "top_20_pace": "Top 20% Pace (min/km)",
-        "sector": "Sector",
-    },
-)
-
-fig.update_yaxes(autorange="reversed")
-
-st.plotly_chart(fig, use_container_width=True)
 
 st.divider()
 
@@ -247,13 +229,7 @@ st.divider()
 
 st.subheader("📊 Overall FitnessDAX Trends")
 
-trend_df = (
-    df[
-        (df["sector"].isin(selected_sectors))
-        & (df["cluster"].isin(selected_clusters))
-    ]
-    .copy()
-)
+trend_df = df.copy()
 
 trend_df = trend_df.dropna(
     subset=[
@@ -344,73 +320,62 @@ st.caption(
 st.divider()
 
 # -------------------------
-# CLUSTER OVERVIEW
+# ANIMATED FITNESS VS STOCK
 # -------------------------
 
-st.subheader("🧩 Cluster Overview")
+st.subheader("💸 Participation vs Stock Performance Over Time")
 
-cluster_df = (
-    filtered
-    .groupby("cluster", as_index=False)
-    .agg(
-        companies=("matched_company", "nunique"),
-        participants=("participants", "sum"),
-        avg_participation_rate_pct=("participation_rate_pct", "mean"),
-        avg_top_20_pace=("top_20_pace", "mean"),
-        avg_stock_return_pct=("yearly_return_pct", "mean"),
-    )
+animated_df = df.copy()
+
+animated_df = animated_df.dropna(
+    subset=[
+        "participation_rate_pct",
+        "yearly_return_pct",
+        "participants",
+        "year",
+    ]
 )
 
-cluster_df["avg_participation_rate_pct"] = cluster_df["avg_participation_rate_pct"].round(2)
-cluster_df["avg_stock_return_pct"] = cluster_df["avg_stock_return_pct"].round(2)
-cluster_df["avg_top_20_pace_formatted"] = cluster_df["avg_top_20_pace"].apply(pace_to_mmss)
-
-st.dataframe(
-    cluster_df[
-        [
-            "cluster",
-            "companies",
-            "participants",
-            "avg_participation_rate_pct",
-            "avg_top_20_pace_formatted",
-            "avg_stock_return_pct",
-        ]
-    ].sort_values("avg_participation_rate_pct", ascending=False),
-    use_container_width=True,
-    hide_index=True
-)
-
-st.divider()
-
-
-# -------------------------
-# FITNESS VS STOCK
-# -------------------------
-
-st.subheader("💸 Fitness vs Stock Performance")
-
-stock_filtered = filtered.dropna(
-    subset=["yearly_return_pct", "participation_rate_pct"]
-)
-
-fig_stock = px.scatter(
-    stock_filtered,
+fig_animated = px.scatter(
+    animated_df,
     x="participation_rate_pct",
     y="yearly_return_pct",
+    animation_frame="year",
+    animation_group="matched_company",
     hover_name="matched_company",
-    color="sector",
     size="participants",
+    color="sector",
+    size_max=60,
+    range_x=[
+        0,
+        animated_df["participation_rate_pct"].max() * 1.1
+    ],
+    range_y=[
+        animated_df["yearly_return_pct"].min() * 1.1,
+        animated_df["yearly_return_pct"].max() * 1.1
+    ],
     labels={
-        "participation_rate_pct": "Participation Rate (% of German employees)",
+        "participation_rate_pct": "Participation Rate (%)",
         "yearly_return_pct": "Stock Return (%)",
+        "participants": "Participants",
         "sector": "Sector",
     },
 )
 
-st.plotly_chart(fig_stock, use_container_width=True)
+fig_animated.update_layout(
+    height=700
+)
+
+st.plotly_chart(
+    fig_animated,
+    use_container_width=True
+)
+
+st.caption(
+    "Each bubble represents a company. Bubble size reflects participant count. The animation shows how companies move through participation and stock performance space over time."
+)
 
 st.divider()
-
 
 # -------------------------
 # COMPANY TRENDS
@@ -450,8 +415,8 @@ fig_company.add_trace(
 fig_company.add_trace(
     go.Scatter(
         x=company_df["year"],
-        y=company_df["top_20_pace"],
-        name="Top 20% Pace (min/km)",
+        y=company_df["median_pace"],
+        name="Median Pace (min/km)",
         mode="lines+markers",
         yaxis="y2",
         connectgaps=True,
@@ -477,7 +442,7 @@ fig_company.update_layout(
         side="left",
     ),
     yaxis2=dict(
-        title="Top 20% Pace (min/km)",
+        title="Median Pace (min/km)",
         overlaying="y",
         side="right",
         autorange="reversed",
@@ -510,17 +475,12 @@ company_cols = [
     "ticker",
     "index",
     "sector",
-    "cluster",
     "participants",
     "germany_employees_estimate",
     "participation_rate_pct",
-    "top_20_pace",
-    "top_20_pace_formatted",
-    "median_pace",
     "median_pace_formatted",
     "yearly_return_pct",
     "races_entered",
-    "endurance_multiple",
 ]
 
 company_cols = [col for col in company_cols if col in company_df.columns]
