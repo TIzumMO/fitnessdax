@@ -19,8 +19,8 @@ merged = fitness.merge(
     how="outer"
 )
 
-merged.to_csv("output/fitnessdax_with_stocks.csv", index=False)
+merged.to_csv("output/fitnessdax_final.csv", index=False)
 
 print(merged.head(30))
 print("")
-print("Saved merged data to output/fitnessdax_with_stocks.csv")
+print("Saved merged data to output/fitnessdax_final.csv")

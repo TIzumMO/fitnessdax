@@ -28,7 +28,7 @@ def pace_to_mmss(pace):
 def format_pct(value):
     if pd.isna(value):
         return "-"
-    return f"{value:.2f}%"
+    return f"{value:.1f}%"
 
 
 # -------------------------
@@ -38,6 +38,7 @@ def format_pct(value):
 df = pd.read_csv("output/fitnessdax_final.csv")
 
 numeric_cols = [
+    "year",
     "participants",
     "races_entered",
     "median_pace",
@@ -45,7 +46,10 @@ numeric_cols = [
     "germany_employees_estimate",
     "participation_rate",
     "participation_rate_pct",
+    "fitness_score",
+    "fitness_score_100",
     "fitnessdax_rank",
+    "endurance_multiple",
 ]
 
 for col in numeric_cols:
@@ -87,6 +91,7 @@ st.caption(
 
 st.divider()
 
+
 # -------------------------
 # LEADERBOARD FILTERS
 # -------------------------
@@ -115,7 +120,22 @@ leaderboard_filtered = df[
 leaderboard_filtered = leaderboard_filtered.dropna(subset=["fitnessdax_rank"])
 leaderboard_filtered = leaderboard_filtered.sort_values("fitnessdax_rank")
 
-st.subheader(f"🏆 FitnessDAX Leaderboard ({selected_year})")
+st.subheader(f"🏆 FitnessDAX Leaderboard ({int(selected_year)})")
+
+st.info(
+
+    "FitnessDAX Score combines workforce participation and median pace. "
+
+    "Participation is benchmarked against a 5% employee participation target. Companies with less than 10 participants are excluded. "
+
+    "Median pace is benchmarked between 4:30/km and 8:00/km. "
+
+    "The final score is based on 70% employee participation benchmark and 30% median pace benchmark. "
+
+    "The score ranges from 0 to 100."
+
+)
+
 
 # -------------------------
 # METRICS
@@ -129,29 +149,36 @@ col1.metric(
 )
 
 col2.metric(
-    "Total Participants",
-    int(leaderboard_filtered["participants"].sum()) if len(leaderboard_filtered) > 0 else 0
-)
-
-median_pace = (
-    leaderboard_filtered["median_pace"].mean()
-    if len(leaderboard_filtered) > 0 else None
-)
-
-col3.metric(
-    "Median Pace",
-    pace_to_mmss(median_pace)
+    "Participants",
+    f"{int(leaderboard_filtered['participants'].sum()):,}"
+    if len(leaderboard_filtered) > 0 else "0"
 )
 
 avg_participation = (
     leaderboard_filtered["participation_rate_pct"].mean()
-    if "participation_rate_pct" in leaderboard_filtered.columns and len(leaderboard_filtered) > 0 else None
+    if "participation_rate_pct" in leaderboard_filtered.columns
+    and len(leaderboard_filtered) > 0
+    else None
+)
+
+col3.metric(
+    "Avg Participation Rate",
+    f"{avg_participation:.1f}%"
+    if pd.notna(avg_participation)
+    else "-"
+)
+
+median_pace = (
+    leaderboard_filtered["median_pace"].mean()
+    if len(leaderboard_filtered) > 0
+    else None
 )
 
 col4.metric(
-    "Avg Participation Rate",
-    format_pct(avg_participation)
+    "Avg Median Pace",
+    pace_to_mmss(median_pace)
 )
+
 
 # -------------------------
 # LEADERBOARD
@@ -160,6 +187,7 @@ col4.metric(
 leaderboard_cols = [
     "fitnessdax_rank",
     "matched_company",
+    "fitness_score_100",
     "index",
     "sector",
     "participants",
@@ -169,20 +197,27 @@ leaderboard_cols = [
     "yearly_return_pct",
 ]
 
-leaderboard_cols = [col for col in leaderboard_cols if col in leaderboard_filtered.columns]
+leaderboard_cols = [
+    col for col in leaderboard_cols
+    if col in leaderboard_filtered.columns
+]
 
 leaderboard = leaderboard_filtered[leaderboard_cols].copy()
 
+if "fitness_score_100" in leaderboard.columns:
+    leaderboard["fitness_score_100"] = leaderboard["fitness_score_100"].round(1)
+
 if "participation_rate_pct" in leaderboard.columns:
-    leaderboard["participation_rate_pct"] = leaderboard["participation_rate_pct"].round(2)
+    leaderboard["participation_rate_pct"] = leaderboard["participation_rate_pct"].round(1)
 
 if "yearly_return_pct" in leaderboard.columns:
-    leaderboard["yearly_return_pct"] = leaderboard["yearly_return_pct"].round(2)
+    leaderboard["yearly_return_pct"] = leaderboard["yearly_return_pct"].round(1)
 
 leaderboard = leaderboard.rename(
     columns={
         "fitnessdax_rank": "Rank",
         "matched_company": "Company",
+        "fitness_score_100": "Fitness Score",
         "index": "Index",
         "sector": "Sector",
         "participants": "Participants",
@@ -193,7 +228,14 @@ leaderboard = leaderboard.rename(
     }
 )
 
-for col in ["Participants", "Employees (DE)", "Participation (%)", "Stock Return (%)"]:
+for col in [
+    "Rank",
+    "Fitness Score",
+    "Participants",
+    "Employees (DE)",
+    "Participation (%)",
+    "Stock Return (%)",
+]:
     if col in leaderboard.columns:
         leaderboard[col] = pd.to_numeric(leaderboard[col], errors="coerce")
 
@@ -202,6 +244,14 @@ st.dataframe(
     use_container_width=True,
     hide_index=True,
     column_config={
+        "Rank": st.column_config.NumberColumn(
+            "Rank",
+            format="%d"
+        ),
+        "Fitness Score": st.column_config.NumberColumn(
+            "Fitness Score",
+            format="%.1f"
+        ),
         "Participants": st.column_config.NumberColumn(
             "Participants",
             format="%d"
@@ -212,16 +262,17 @@ st.dataframe(
         ),
         "Participation (%)": st.column_config.NumberColumn(
             "Participation (%)",
-            format="%.2f%%"
+            format="%.1f%%"
         ),
         "Stock Return (%)": st.column_config.NumberColumn(
             "Stock Return (%)",
-            format="%.2f%%"
+            format="%.1f%%"
         ),
     }
 )
 
 st.divider()
+
 
 # -------------------------
 # OVERALL YEARLY TRENDS
@@ -234,8 +285,7 @@ trend_df = df.copy()
 trend_df = trend_df.dropna(
     subset=[
         "year",
-        "participation_rate_pct",
-        "median_pace",
+        "fitness_score_100",
         "yearly_return_pct",
     ]
 )
@@ -244,8 +294,7 @@ overall_trend_df = (
     trend_df
     .groupby("year", as_index=False)
     .agg(
-        avg_participation_rate_pct=("participation_rate_pct", "mean"),
-        avg_median_pace=("median_pace", "mean"),
+        avg_fitness_score=("fitness_score_100", "mean"),
         avg_stock_return_pct=("yearly_return_pct", "mean"),
     )
     .sort_values("year")
@@ -256,8 +305,8 @@ fig_overall = go.Figure()
 fig_overall.add_trace(
     go.Scatter(
         x=overall_trend_df["year"],
-        y=overall_trend_df["avg_stock_return_pct"],
-        name="Avg Stock Return (%)",
+        y=overall_trend_df["avg_fitness_score"],
+        name="Avg Fitness Score",
         mode="lines+markers",
         connectgaps=True,
     )
@@ -266,44 +315,25 @@ fig_overall.add_trace(
 fig_overall.add_trace(
     go.Scatter(
         x=overall_trend_df["year"],
-        y=overall_trend_df["avg_median_pace"],
-        name="Avg Median Pace (min/km)",
+        y=overall_trend_df["avg_stock_return_pct"],
+        name="Avg Stock Return (%)",
         mode="lines+markers",
         yaxis="y2",
         connectgaps=True,
     )
 )
 
-fig_overall.add_trace(
-    go.Scatter(
-        x=overall_trend_df["year"],
-        y=overall_trend_df["avg_participation_rate_pct"],
-        name="Avg Participation Rate (%)",
-        mode="lines+markers",
-        yaxis="y3",
-        connectgaps=True,
-    )
-)
-
 fig_overall.update_layout(
-    title="All Companies Combined: Stock Performance, Median Pace and Participation Rate",
+    title="All Companies Combined: Fitness Score and Stock Performance",
     xaxis=dict(title="Year"),
     yaxis=dict(
-        title="Avg Stock Return (%)",
+        title="Avg Fitness Score",
         side="left",
     ),
     yaxis2=dict(
-        title="Avg Median Pace (min/km)",
+        title="Avg Stock Return (%)",
         overlaying="y",
         side="right",
-        autorange="reversed",
-    ),
-    yaxis3=dict(
-        title="Avg Participation Rate (%)",
-        overlaying="y",
-        side="right",
-        position=0.95,
-        anchor="free",
     ),
     hovermode="x unified",
 )
@@ -314,68 +344,312 @@ st.plotly_chart(
 )
 
 st.caption(
-    "This chart combines all selected companies and shows average values per year. Lower median pace means faster runners."
+    "FitnessDAX Score combines participation rate and median pace. Stock return is shown as the yearly return percentage."
 )
 
 st.divider()
+
 
 # -------------------------
 # ANIMATED FITNESS VS STOCK
 # -------------------------
 
-st.subheader("💸 Participation vs Stock Performance Over Time")
+st.subheader("💸 Fitness Score vs Stock Performance Over Time")
 
 animated_df = df.copy()
 
 animated_df = animated_df.dropna(
     subset=[
-        "participation_rate_pct",
+        "fitness_score_100",
         "yearly_return_pct",
         "participants",
         "year",
     ]
 )
 
-fig_animated = px.scatter(
-    animated_df,
-    x="participation_rate_pct",
-    y="yearly_return_pct",
-    animation_frame="year",
-    animation_group="matched_company",
-    hover_name="matched_company",
-    size="participants",
-    color="sector",
-    size_max=60,
-    range_x=[
-        0,
-        animated_df["participation_rate_pct"].max() * 1.1
-    ],
-    range_y=[
-        animated_df["yearly_return_pct"].min() * 1.1,
-        animated_df["yearly_return_pct"].max() * 1.1
-    ],
-    labels={
-        "participation_rate_pct": "Participation Rate (%)",
-        "yearly_return_pct": "Stock Return (%)",
-        "participants": "Participants",
-        "sector": "Sector",
-    },
-)
+if animated_df.empty:
+    st.warning("Not enough data available for the animated chart.")
+else:
+    fig_animated = px.scatter(
+        animated_df,
+        x="fitness_score_100",
+        y="yearly_return_pct",
+        animation_frame="year",
+        animation_group="matched_company",
+        hover_name="matched_company",
+        size="participants",
+        color="sector",
+        size_max=60,
+        range_x=[
+            0,
+            animated_df["fitness_score_100"].max() * 1.1
+        ],
+        range_y=[
+            animated_df["yearly_return_pct"].min() * 1.1,
+            animated_df["yearly_return_pct"].max() * 1.1
+        ],
+        labels={
+            "fitness_score_100": "Fitness Score",
+            "yearly_return_pct": "Stock Return (%)",
+            "participants": "Participants",
+            "sector": "Sector",
+        },
+    )
 
-fig_animated.update_layout(
-    height=700
-)
+    fig_animated.update_layout(
+        height=700
+    )
 
-st.plotly_chart(
-    fig_animated,
-    use_container_width=True
-)
+    st.plotly_chart(
+        fig_animated,
+        use_container_width=True
+    )
 
-st.caption(
-    "Each bubble represents a company. Bubble size reflects participant count. The animation shows how companies move through participation and stock performance space over time."
-)
+    st.caption(
+        "Each bubble represents a company. Bubble size reflects participant count. The animation shows how companies move through Fitness Score and stock performance space over time."
+    )
 
 st.divider()
+
+
+# -------------------------
+# POSSIBLE LEADING INDICATORS
+# -------------------------
+
+st.subheader("🔮 Possible Leading Indicators")
+
+st.markdown("""
+The chart above compares fitness and stock performance in the same year.
+
+But a more interesting question is whether company running culture could act as a **leading indicator**:
+
+> Does stronger participation today show up in stock performance one year later?
+
+This section compares current-year FitnessDAX metrics with **next-year stock returns**.  
+This is exploratory and definitely not financial advice.
+""")
+
+prediction_df = df.copy()
+
+prediction_df = prediction_df.sort_values(
+    ["matched_company", "year"]
+)
+
+prediction_df["next_year_stock_return_pct"] = (
+    prediction_df
+    .groupby("matched_company")["yearly_return_pct"]
+    .shift(-1)
+)
+
+prediction_df["fitness_score_change"] = (
+    prediction_df
+    .groupby("matched_company")["fitness_score_100"]
+    .diff()
+)
+
+prediction_df["participation_rate_change_pct"] = (
+    prediction_df
+    .groupby("matched_company")["participation_rate_pct"]
+    .diff()
+)
+
+lead_required_cols = [
+    "next_year_stock_return_pct",
+    "fitness_score_100",
+    "participation_rate_pct",
+    "participants",
+    "races_entered",
+    "median_pace",
+]
+
+if "endurance_multiple" in prediction_df.columns:
+    lead_required_cols.append("endurance_multiple")
+
+lead_df = prediction_df.dropna(
+    subset=lead_required_cols
+).copy()
+
+if lead_df.empty:
+    st.warning(
+        "Not enough data available yet to calculate next-year leading indicator charts."
+    )
+else:
+    # -------------------------
+    # CORRELATION OVERVIEW
+    # -------------------------
+
+    indicator_map = {
+        "Fitness Score": "fitness_score_100",
+        "Participation Rate": "participation_rate_pct",
+        "Participants": "participants",
+        "Races Entered": "races_entered",
+        "Median Pace": "median_pace",
+    }
+
+    if "endurance_multiple" in lead_df.columns:
+        indicator_map["Endurance Multiple"] = "endurance_multiple"
+
+    correlation_rows = []
+
+    for label, col in indicator_map.items():
+        if col in lead_df.columns:
+            corr = lead_df[col].corr(
+                lead_df["next_year_stock_return_pct"]
+            )
+
+            correlation_rows.append(
+                {
+                    "Possible Leading Indicator": label,
+                    "Correlation with Next-Year Stock Return": corr,
+                }
+            )
+
+    correlation_df = pd.DataFrame(correlation_rows)
+
+    if not correlation_df.empty:
+        correlation_df["Correlation with Next-Year Stock Return"] = (
+            correlation_df["Correlation with Next-Year Stock Return"].round(2)
+        )
+
+        st.dataframe(
+            correlation_df.sort_values(
+                "Correlation with Next-Year Stock Return",
+                ascending=False
+            ),
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Correlation with Next-Year Stock Return": st.column_config.NumberColumn(
+                    "Correlation with Next-Year Stock Return",
+                    format="%.2f"
+                ),
+            }
+        )
+
+    st.caption(
+        "Positive values mean that higher current-year values are associated with higher stock returns in the following year. The dataset is small, so this should be read as exploration, not prediction."
+    )
+
+    st.divider()
+
+    # -------------------------
+    # ENDURANCE MULTIPLE VS NEXT-YEAR STOCK RETURN
+    # -------------------------
+
+    if "endurance_multiple" in lead_df.columns:
+        st.subheader("🏃 Endurance Multiple vs Next-Year Stock Return")
+
+        st.markdown("""
+        The **Endurance Multiple** combines company running scale and median pace:
+
+        ```text
+        Endurance Multiple = log10(participants) / median pace
+        ```
+
+        It rewards companies that mobilize many runners, while preventing very large companies from dominating purely by size.
+        """)
+
+        fig_endurance_lead = px.scatter(
+            lead_df,
+            x="endurance_multiple",
+            y="next_year_stock_return_pct",
+            hover_name="matched_company",
+            color="sector",
+            size="participants",
+            labels={
+                "endurance_multiple": "Endurance Multiple",
+                "next_year_stock_return_pct": "Next-Year Stock Return (%)",
+                "sector": "Sector",
+                "participants": "Participants",
+            },
+        )
+
+        fig_endurance_lead.add_hline(
+            y=0,
+            line_dash="dash",
+            annotation_text="0% next-year return",
+            annotation_position="bottom right"
+        )
+
+        st.plotly_chart(
+            fig_endurance_lead,
+            use_container_width=True
+        )
+
+        st.caption(
+            "Each point compares a company's current-year Endurance Multiple with its stock return in the following year."
+        )
+
+        st.divider()
+
+    # -------------------------
+    # FITNESS MOMENTUM VS NEXT-YEAR STOCK RETURN
+    # -------------------------
+
+    st.subheader("📈 Fitness Momentum vs Next-Year Stock Return")
+
+    st.markdown("""
+This chart looks at **FitnessDAX momentum**:
+
+> Did a company improve its FitnessDAX Score compared with the previous year?
+
+The x-axis shows the change in FitnessDAX Score.  
+The y-axis shows the stock return in the following year.
+""")
+
+    momentum_df = prediction_df.dropna(
+        subset=[
+            "fitness_score_change",
+            "next_year_stock_return_pct",
+            "participants",
+        ]
+    ).copy()
+
+    if momentum_df.empty:
+        st.warning(
+            "Not enough overlapping year data available for the Fitness Momentum chart."
+        )
+    else:
+        fig_momentum = px.scatter(
+            momentum_df,
+            x="fitness_score_change",
+            y="next_year_stock_return_pct",
+            hover_name="matched_company",
+            color="sector",
+            size="participants",
+            labels={
+                "fitness_score_change": "Fitness Score Change vs Previous Year",
+                "next_year_stock_return_pct": "Next-Year Stock Return (%)",
+                "sector": "Sector",
+                "participants": "Participants",
+            },
+        )
+
+        fig_momentum.add_vline(
+            x=0,
+            line_dash="dash",
+            annotation_text="No fitness change",
+            annotation_position="top left"
+        )
+
+        fig_momentum.add_hline(
+            y=0,
+            line_dash="dash",
+            annotation_text="0% next-year return",
+            annotation_position="bottom right"
+        )
+
+        st.plotly_chart(
+            fig_momentum,
+            use_container_width=True
+        )
+
+        st.caption(
+            "Top-right companies improved their FitnessDAX Score and had positive stock performance in the following year. This is exploratory and not a trading signal."
+        )
+
+        st.divider()
+
 
 # -------------------------
 # COMPANY TRENDS
@@ -405,8 +679,8 @@ fig_company = go.Figure()
 fig_company.add_trace(
     go.Scatter(
         x=company_df["year"],
-        y=company_df["yearly_return_pct"],
-        name="Stock Return (%)",
+        y=company_df["fitness_score_100"],
+        name="Fitness Score",
         mode="lines+markers",
         connectgaps=True,
     )
@@ -415,44 +689,25 @@ fig_company.add_trace(
 fig_company.add_trace(
     go.Scatter(
         x=company_df["year"],
-        y=company_df["median_pace"],
-        name="Median Pace (min/km)",
+        y=company_df["yearly_return_pct"],
+        name="Stock Return (%)",
         mode="lines+markers",
         yaxis="y2",
         connectgaps=True,
     )
 )
 
-fig_company.add_trace(
-    go.Scatter(
-        x=company_df["year"],
-        y=company_df["participation_rate_pct"],
-        name="Participation Rate (%)",
-        mode="lines+markers",
-        yaxis="y3",
-        connectgaps=True,
-    )
-)
-
 fig_company.update_layout(
-    title=f"{selected_company}: Stock Performance, Pace and Participation",
+    title=f"{selected_company}: Fitness Score and Stock Performance",
     xaxis=dict(title="Year"),
     yaxis=dict(
-        title="Stock Return (%)",
+        title="Fitness Score",
         side="left",
     ),
     yaxis2=dict(
-        title="Median Pace (min/km)",
+        title="Stock Return (%)",
         overlaying="y",
         side="right",
-        autorange="reversed",
-    ),
-    yaxis3=dict(
-        title="Participation Rate (%)",
-        overlaying="y",
-        side="right",
-        position=0.95,
-        anchor="free",
     ),
     hovermode="x unified",
 )
@@ -475,30 +730,106 @@ company_cols = [
     "ticker",
     "index",
     "sector",
+    "fitness_score_100",
     "participants",
     "germany_employees_estimate",
     "participation_rate_pct",
     "median_pace_formatted",
     "yearly_return_pct",
     "races_entered",
+    "endurance_multiple",
 ]
 
-company_cols = [col for col in company_cols if col in company_df.columns]
+company_cols = [
+    col for col in company_cols
+    if col in company_df.columns
+]
 
 company_table = company_df[company_cols].copy()
 
+if "fitness_score_100" in company_table.columns:
+    company_table["fitness_score_100"] = company_table["fitness_score_100"].round(1)
+
 if "participation_rate_pct" in company_table.columns:
-    company_table["participation_rate_pct"] = company_table["participation_rate_pct"].round(2)
+    company_table["participation_rate_pct"] = company_table["participation_rate_pct"].round(1)
 
 if "yearly_return_pct" in company_table.columns:
-    company_table["yearly_return_pct"] = company_table["yearly_return_pct"].round(2)
+    company_table["yearly_return_pct"] = company_table["yearly_return_pct"].round(1)
+
+if "endurance_multiple" in company_table.columns:
+    company_table["endurance_multiple"] = company_table["endurance_multiple"].round(3)
+
+company_table = company_table.rename(
+    columns={
+        "year": "Year",
+        "matched_company": "Company",
+        "ticker": "Ticker",
+        "index": "Index",
+        "sector": "Sector",
+        "fitness_score_100": "Fitness Score",
+        "participants": "Participants",
+        "germany_employees_estimate": "Employees (DE)",
+        "participation_rate_pct": "Participation (%)",
+        "median_pace_formatted": "Median Pace",
+        "yearly_return_pct": "Stock Return (%)",
+        "races_entered": "Races Entered",
+        "endurance_multiple": "Endurance Multiple",
+    }
+)
+
+for col in [
+    "Year",
+    "Fitness Score",
+    "Participants",
+    "Employees (DE)",
+    "Participation (%)",
+    "Stock Return (%)",
+    "Races Entered",
+    "Endurance Multiple",
+]:
+    if col in company_table.columns:
+        company_table[col] = pd.to_numeric(company_table[col], errors="coerce")
 
 st.dataframe(
     company_table,
     use_container_width=True,
-    hide_index=True
+    hide_index=True,
+    column_config={
+        "Year": st.column_config.NumberColumn(
+            "Year",
+            format="%d"
+        ),
+        "Fitness Score": st.column_config.NumberColumn(
+            "Fitness Score",
+            format="%.1f"
+        ),
+        "Participants": st.column_config.NumberColumn(
+            "Participants",
+            format="%d"
+        ),
+        "Employees (DE)": st.column_config.NumberColumn(
+            "Employees (DE)",
+            format="%d"
+        ),
+        "Participation (%)": st.column_config.NumberColumn(
+            "Participation (%)",
+            format="%.1f%%"
+        ),
+        "Stock Return (%)": st.column_config.NumberColumn(
+            "Stock Return (%)",
+            format="%.1f%%"
+        ),
+        "Races Entered": st.column_config.NumberColumn(
+            "Races Entered",
+            format="%d"
+        ),
+        "Endurance Multiple": st.column_config.NumberColumn(
+            "Endurance Multiple",
+            format="%.3f"
+        ),
+    }
 )
 
 st.caption(
-    "Lower pace means faster runners. Pace axes are reversed so that better fitness appears higher. German employee numbers are estimates and used for normalization."
+    "FitnessDAX Score combines a 70% participation benchmark and a 30% median pace benchmark. German employee numbers are estimates and used for normalization."
 )
