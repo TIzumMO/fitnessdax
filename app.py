@@ -124,7 +124,7 @@ st.subheader(f"🏆 FitnessDAX Leaderboard ({int(selected_year)})")
 
 st.info(
 
-    "FitnessDAX Score combines workforce participation and median pace. "
+    "The Fitness Score combines workforce participation and median pace. "
 
     "Participation is benchmarked against a 5% employee participation target. Companies with less than 10 participants are excluded. "
 
@@ -499,7 +499,7 @@ else:
 
             correlation_rows.append(
                 {
-                    "Possible Leading Indicator": label,
+                    "Indicator": label,
                     "Correlation with Next-Year Stock Return": corr,
                 }
             )
@@ -540,115 +540,73 @@ else:
         st.subheader("🏃 Endurance Multiple vs Next-Year Stock Return")
 
         st.markdown("""
-        The **Endurance Multiple** combines company running scale and median pace:
+    The **Endurance Multiple** combines company running scale and median pace:
 
-        ```text
-        Endurance Multiple = log10(participants) / median pace
-        ```
+    ```text
+    Endurance Multiple = log10(participants) / median pace
 
-        It rewards companies that mobilize many runners, while preventing very large companies from dominating purely by size.
-        """)
+    It rewards companies that mobilize many runners, while preventing very large companies from dominating purely by size.
 
-        fig_endurance_lead = px.scatter(
-            lead_df,
-            x="endurance_multiple",
-            y="next_year_stock_return_pct",
-            hover_name="matched_company",
-            color="sector",
-            size="participants",
-            labels={
-                "endurance_multiple": "Endurance Multiple",
-                "next_year_stock_return_pct": "Next-Year Stock Return (%)",
-                "sector": "Sector",
-                "participants": "Participants",
-            },
-        )
+    Use the year filter below to select the stock return year.
+    For example: selecting 2025 compares the 2024 Endurance Multiple with the 2025 stock return.
+    """)
 
-        fig_endurance_lead.add_hline(
-            y=0,
-            line_dash="dash",
-            annotation_text="0% next-year return",
-            annotation_position="bottom right"
-        )
+    # Create explicit stock return year
+    lead_df["stock_return_year"] = lead_df["year"] + 1
 
-        st.plotly_chart(
-            fig_endurance_lead,
-            use_container_width=True
-        )
+    available_return_years = sorted(
+        lead_df["stock_return_year"].dropna().unique(),
+        reverse=True
+    )
 
-        st.caption(
-            "Each point compares a company's current-year Endurance Multiple with its stock return in the following year."
-        )
+    selected_return_year = st.selectbox(
+        "Select stock return year",
+        available_return_years,
+        index=0,
+        key="endurance_return_year"
+    )
 
-        st.divider()
+    endurance_chart_df = lead_df[
+        lead_df["stock_return_year"] == selected_return_year
+    ].copy()
 
-    # -------------------------
-    # FITNESS MOMENTUM VS NEXT-YEAR STOCK RETURN
-    # -------------------------
+    st.caption(
+        f"Showing Endurance Multiple from {int(selected_return_year) - 1} "
+        f"against stock return in {int(selected_return_year)}."
+    )
 
-    st.subheader("📈 Fitness Momentum vs Next-Year Stock Return")
+    fig_endurance_lead = px.scatter(
+        endurance_chart_df,
+        x="endurance_multiple",
+        y="next_year_stock_return_pct",
+        hover_name="matched_company",
+        color="sector",
+        size="participants",
+        labels={
+            "endurance_multiple": f"Endurance Multiple ({int(selected_return_year) - 1})",
+            "next_year_stock_return_pct": f"Stock Return ({int(selected_return_year)})",
+            "sector": "Sector",
+            "participants": "Participants",
+        },
+    )
 
-    st.markdown("""
-This chart looks at **FitnessDAX momentum**:
+    fig_endurance_lead.add_hline(
+        y=0,
+        line_dash="dash",
+        annotation_text="0% stock return",
+        annotation_position="bottom right"
+    )
 
-> Did a company improve its FitnessDAX Score compared with the previous year?
+    st.plotly_chart(
+        fig_endurance_lead,
+        use_container_width=True
+    )
 
-The x-axis shows the change in FitnessDAX Score.  
-The y-axis shows the stock return in the following year.
-""")
+    st.caption(
+        "Each point compares a company's previous-year Endurance Multiple with its stock return in the selected year."
+    )
 
-    momentum_df = prediction_df.dropna(
-        subset=[
-            "fitness_score_change",
-            "next_year_stock_return_pct",
-            "participants",
-        ]
-    ).copy()
-
-    if momentum_df.empty:
-        st.warning(
-            "Not enough overlapping year data available for the Fitness Momentum chart."
-        )
-    else:
-        fig_momentum = px.scatter(
-            momentum_df,
-            x="fitness_score_change",
-            y="next_year_stock_return_pct",
-            hover_name="matched_company",
-            color="sector",
-            size="participants",
-            labels={
-                "fitness_score_change": "Fitness Score Change vs Previous Year",
-                "next_year_stock_return_pct": "Next-Year Stock Return (%)",
-                "sector": "Sector",
-                "participants": "Participants",
-            },
-        )
-
-        fig_momentum.add_vline(
-            x=0,
-            line_dash="dash",
-            annotation_text="No fitness change",
-            annotation_position="top left"
-        )
-
-        fig_momentum.add_hline(
-            y=0,
-            line_dash="dash",
-            annotation_text="0% next-year return",
-            annotation_position="bottom right"
-        )
-
-        st.plotly_chart(
-            fig_momentum,
-            use_container_width=True
-        )
-
-        st.caption(
-            "Top-right companies improved their FitnessDAX Score and had positive stock performance in the following year. This is exploratory and not a trading signal."
-        )
-
-        st.divider()
+    st.divider()
 
 
 # -------------------------
@@ -697,9 +655,22 @@ fig_company.add_trace(
     )
 )
 
+fig_company.add_trace(
+    go.Scatter(
+        x=company_df["year"],
+        y=company_df["endurance_multiple"],
+        name="Endurance Multiple",
+        mode="lines+markers",
+        yaxis="y3",
+        connectgaps=True,
+    )
+)
+
 fig_company.update_layout(
-    title=f"{selected_company}: Fitness Score and Stock Performance",
-    xaxis=dict(title="Year"),
+    title=f"{selected_company}: Fitness Score, Endurance Multiple and Stock Performance",
+    xaxis=dict(
+        title="Year"
+    ),
     yaxis=dict(
         title="Fitness Score",
         side="left",
@@ -708,6 +679,13 @@ fig_company.update_layout(
         title="Stock Return (%)",
         overlaying="y",
         side="right",
+    ),
+    yaxis3=dict(
+        title="Endurance Multiple",
+        overlaying="y",
+        side="right",
+        anchor="free",
+        position=0.95,
     ),
     hovermode="x unified",
 )
@@ -828,8 +806,4 @@ st.dataframe(
             format="%.3f"
         ),
     }
-)
-
-st.caption(
-    "FitnessDAX Score combines a 70% participation benchmark and a 30% median pace benchmark. German employee numbers are estimates and used for normalization."
 )
