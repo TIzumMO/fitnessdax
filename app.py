@@ -192,6 +192,7 @@ leaderboard_cols = [
     "sector",
     "participants",
     "germany_employees_estimate",
+    "endurance_multiple",
     "participation_rate_pct",
     "median_pace_formatted",
     "yearly_return_pct",
@@ -222,6 +223,7 @@ leaderboard = leaderboard.rename(
         "sector": "Sector",
         "participants": "Participants",
         "germany_employees_estimate": "Employees (DE)",
+        "endurance_multiple": "Endurance Multiple",
         "participation_rate_pct": "Participation (%)",
         "median_pace_formatted": "Median Pace",
         "yearly_return_pct": "Stock Return (%)",
@@ -233,6 +235,7 @@ for col in [
     "Fitness Score",
     "Participants",
     "Employees (DE)",
+    "Endurance Multiple",
     "Participation (%)",
     "Stock Return (%)",
 ]:
