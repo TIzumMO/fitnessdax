@@ -49,7 +49,7 @@ numeric_cols = [
     "fitness_score",
     "fitness_score_100",
     "fitnessdax_rank",
-    "endurance_multiple",
+    "culture_score",
 ]
 
 for col in numeric_cols:
@@ -192,7 +192,7 @@ leaderboard_cols = [
     "sector",
     "participants",
     "germany_employees_estimate",
-    "endurance_multiple",
+    "culture_score",
     "participation_rate_pct",
     "median_pace_formatted",
     "yearly_return_pct",
@@ -223,7 +223,7 @@ leaderboard = leaderboard.rename(
         "sector": "Sector",
         "participants": "Participants",
         "germany_employees_estimate": "Employees (DE)",
-        "endurance_multiple": "Endurance Multiple",
+        "culture_score": "Culture Score",
         "participation_rate_pct": "Participation (%)",
         "median_pace_formatted": "Median Pace",
         "yearly_return_pct": "Stock Return (%)",
@@ -235,7 +235,7 @@ for col in [
     "Fitness Score",
     "Participants",
     "Employees (DE)",
-    "Endurance Multiple",
+    "Culture Score",
     "Participation (%)",
     "Stock Return (%)",
 ]:
@@ -465,8 +465,8 @@ lead_required_cols = [
     "median_pace",
 ]
 
-if "endurance_multiple" in prediction_df.columns:
-    lead_required_cols.append("endurance_multiple")
+if "culture_score" in prediction_df.columns:
+    lead_required_cols.append("culture_score")
 
 lead_df = prediction_df.dropna(
     subset=lead_required_cols
@@ -489,8 +489,8 @@ else:
         "Median Pace": "median_pace",
     }
 
-    if "endurance_multiple" in lead_df.columns:
-        indicator_map["Endurance Multiple"] = "endurance_multiple"
+    if "culture_score" in lead_df.columns:
+        indicator_map["Culture Score"] = "culture_score"
 
     correlation_rows = []
 
@@ -536,22 +536,22 @@ else:
     st.divider()
 
     # -------------------------
-    # ENDURANCE MULTIPLE VS NEXT-YEAR STOCK RETURN
+    #  CULTURE SCORE VS NEXT-YEAR STOCK RETURN
     # -------------------------
 
-    if "endurance_multiple" in lead_df.columns:
-        st.subheader("🏃 Endurance Multiple vs Next-Year Stock Return")
+    if "culture_score" in lead_df.columns:
+        st.subheader("🏃 Culture Score vs Next-Year Stock Return")
 
         st.markdown("""
-    The **Endurance Multiple** combines company running scale and median pace:
+    The **Culture Score** combines company running scale and median pace:
 
     ```text
-    Endurance Multiple = log10(participants) / median pace
+    Culture Score = log10(participants) / median pace
 
     It rewards companies that mobilize many runners, while preventing very large companies from dominating purely by size.
 
     Use the year filter below to select the stock return year.
-    For example: selecting 2025 compares the 2024 Endurance Multiple with the 2025 stock return.
+    For example: selecting 2025 compares the 2024 Culture Score with the 2025 stock return.
     """)
 
     # Create explicit stock return year
@@ -566,34 +566,34 @@ else:
         "Select stock return year",
         available_return_years,
         index=0,
-        key="endurance_return_year"
+        key="culture_score_return_year"
     )
 
-    endurance_chart_df = lead_df[
+    culture_score_chart_df = lead_df[
         lead_df["stock_return_year"] == selected_return_year
     ].copy()
 
     st.caption(
-        f"Showing Endurance Multiple from {int(selected_return_year) - 1} "
+        f"Showing Culture Score from {int(selected_return_year) - 1} "
         f"against stock return in {int(selected_return_year)}."
     )
 
-    fig_endurance_lead = px.scatter(
-        endurance_chart_df,
-        x="endurance_multiple",
+    fig_culture_score_lead = px.scatter(
+        culture_score_chart_df,
+        x="culture_score",
         y="next_year_stock_return_pct",
         hover_name="matched_company",
         color="sector",
         size="participants",
         labels={
-            "endurance_multiple": f"Endurance Multiple ({int(selected_return_year) - 1})",
+            "culture_score": f"Culture Score ({int(selected_return_year) - 1})",
             "next_year_stock_return_pct": f"Stock Return ({int(selected_return_year)})",
             "sector": "Sector",
             "participants": "Participants",
         },
     )
 
-    fig_endurance_lead.add_hline(
+    fig_culture_score_lead.add_hline(
         y=0,
         line_dash="dash",
         annotation_text="0% stock return",
@@ -601,12 +601,12 @@ else:
     )
 
     st.plotly_chart(
-        fig_endurance_lead,
+        fig_culture_score_lead,
         use_container_width=True
     )
 
     st.caption(
-        "Each point compares a company's previous-year Endurance Multiple with its stock return in the selected year."
+        "Each point compares a company's previous-year Culture Score with its stock return in the selected year."
     )
 
     st.divider()
@@ -661,8 +661,8 @@ fig_company.add_trace(
 fig_company.add_trace(
     go.Scatter(
         x=company_df["year"],
-        y=company_df["endurance_multiple"],
-        name="Endurance Multiple",
+        y=company_df["culture_score"],
+        name="Culture Score",
         mode="lines+markers",
         yaxis="y3",
         connectgaps=True,
@@ -670,7 +670,7 @@ fig_company.add_trace(
 )
 
 fig_company.update_layout(
-    title=f"{selected_company}: Fitness Score, Endurance Multiple and Stock Performance",
+    title=f"{selected_company}: Fitness Score, Culture Score and Stock Performance",
     xaxis=dict(
         title="Year"
     ),
@@ -684,7 +684,7 @@ fig_company.update_layout(
         side="right",
     ),
     yaxis3=dict(
-        title="Endurance Multiple",
+        title="Culture Score",
         overlaying="y",
         side="right",
         anchor="free",
@@ -718,7 +718,7 @@ company_cols = [
     "median_pace_formatted",
     "yearly_return_pct",
     "races_entered",
-    "endurance_multiple",
+    "culture_score",
 ]
 
 company_cols = [
@@ -737,8 +737,8 @@ if "participation_rate_pct" in company_table.columns:
 if "yearly_return_pct" in company_table.columns:
     company_table["yearly_return_pct"] = company_table["yearly_return_pct"].round(1)
 
-if "endurance_multiple" in company_table.columns:
-    company_table["endurance_multiple"] = company_table["endurance_multiple"].round(3)
+if "culture_score" in company_table.columns:
+    company_table["culture_score"] = company_table["culture_score"].round(3)
 
 company_table = company_table.rename(
     columns={
@@ -754,7 +754,7 @@ company_table = company_table.rename(
         "median_pace_formatted": "Median Pace",
         "yearly_return_pct": "Stock Return (%)",
         "races_entered": "Races Entered",
-        "endurance_multiple": "Endurance Multiple",
+        "culture_score": "Culture Score",
     }
 )
 
@@ -766,7 +766,7 @@ for col in [
     "Participation (%)",
     "Stock Return (%)",
     "Races Entered",
-    "Endurance Multiple",
+    "Culture Score",
 ]:
     if col in company_table.columns:
         company_table[col] = pd.to_numeric(company_table[col], errors="coerce")
@@ -804,8 +804,8 @@ st.dataframe(
             "Races Entered",
             format="%d"
         ),
-        "Endurance Multiple": st.column_config.NumberColumn(
-            "Endurance Multiple",
+        "Culture Score": st.column_config.NumberColumn(
+            "Culture Score",
             format="%.3f"
         ),
     }

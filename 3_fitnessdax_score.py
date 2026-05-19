@@ -146,12 +146,12 @@ company["top_20_pace_rank"] = (
     .astype(int)
 )
 
-company["endurance_multiple"] = (
+company["culture_score"] = (
     company["participants"].apply(lambda x: math.log10(x)) / company["median_pace"]
 )
 
-company["endurance_multiple_rank"] = (
-    company.groupby("year")["endurance_multiple"]
+company["culture_score_rank"] = (
+    company.groupby("year")["culture_score"]
     .rank(method="first", ascending=False)
     .astype(int)
 )
@@ -166,7 +166,7 @@ company["average_pace_formatted"] = company["average_pace"].apply(pace_to_mmss)
 company["fastest_pace_formatted"] = company["fastest_pace"].apply(pace_to_mmss)
 company["slowest_pace_formatted"] = company["slowest_pace"].apply(pace_to_mmss)
 
-company["endurance_multiple"] = company["endurance_multiple"].round(3)
+company["culture_score"] = company["culture_score"].round(3)
 company["participation_rate_pct"] = company["participation_rate_pct"].round(2)
 company["fitness_score"] = company["fitness_score"].round(4)
 company["fitness_score_100"] = company["fitness_score_100"].round(1)
@@ -199,8 +199,8 @@ ranking = ranking[
         "average_pace_formatted",
         "fastest_pace_formatted",
         "slowest_pace_formatted",
-        "endurance_multiple",
-        "endurance_multiple_rank",
+        "culture_score",
+        "culture_score_rank",
     ]
 ]
 

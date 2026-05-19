@@ -170,6 +170,24 @@ matched_df = matched_df.drop_duplicates(
 )
 
 # -----------------------------
+# Create unmatched companies list
+# -----------------------------
+
+matched_original_companies = set(matched_df["company"].dropna().unique())
+
+unmatched_df = results[
+    ~results["company"].isin(matched_original_companies)
+].copy()
+
+unmatched_companies = (
+    unmatched_df[["company", "company_normalized"]]
+    .drop_duplicates()
+    .sort_values("company")
+)
+
+unmatched_companies.to_csv("data/unmatched_companies.csv", index=False)
+
+# -----------------------------
 # Save
 # -----------------------------
 
@@ -179,5 +197,7 @@ print("")
 print(f"Alias matches: {len(alias_df)}")
 print(f"Direct matches: {len(direct_df)}")
 print(f"Total matched runner entries: {len(matched_df)}")
+print(f"Unmatched companies: {len(unmatched_companies)}")
 print("")
 print("Saved to data/fitnessdax_matches.csv")
+print("Saved to data/unmatched_companies.csv")
